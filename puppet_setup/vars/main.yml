@@ -1,0 +1,4 @@
+# vars file for puppet_setup
+---
+ puppetRepo: https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+ master: ansible_controlnode
