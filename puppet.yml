@@ -1,0 +1,59 @@
+---
+- name: Centralized playbook to deploy and configure Puppet
+  hosts: all
+  become: yes
+  tasks:
+  - name: Include variables
+    include_vars: puppet_setup/vars/main.yml
+
+  - name: Install Extra Package Repository
+    yum: name={{ puppetRepo }} state=present
+
+  - name: Installing Puppet
+    include: puppet_setup/tasks/install.yml
+
+#  - name: Add Puppet bin directory to $PATH.
+#    lineinfile:
+#      dest: /etc/environment
+#      state: present
+#      backrefs: yes
+#      regexp: "PATH=(["]*)((?!.*?{{ puppet_bin_path }}).*?)(["]*)$"
+#      line: "PATH=\1\2:{{ puppet_bin_path }}\3"
+
+  - name: Creating rule in firewall to allow Puppet traffic
+    firewalld:
+       port: 8140/tcp
+       permanent: yes
+       immediate: yes
+       state: enabled
+
+  - name: Fixing memory requirement in order to smooth start of puppet server
+    replace:
+       path: /etc/sysconfig/puppetserver
+       regexp: "{{ item.regexp }}"
+       replace: "{{ item.replace }}"
+    with_items:
+    - { regexp: 'Xms2g', replace: 'Xms512m' }
+    - { regexp: 'Xmx2g', replace: 'Xmx512m' }
+    when: master|string in ansible_fqdn
+
+  - name: Deploying basic Puppet Configuration file
+    template: src=puppet_setup/files/puppet.conf.j2 dest=/etc/puppetlabs/puppet/puppet.conf owner=root group=root mode=0644
+
+  - name: Verify if any CA authority present for certificate signing
+    stat:
+       path: /etc/puppetlabs/puppet/ssl/ca/ca_crt.pem
+    register: sslPath
+    when: master|string in ansible_fqdn
+
+  - name: Creating CA authority
+    shell: /opt/puppetlabs/bin/puppetserver ca setup
+    when: master|string in ansible_fqdn and sslPath is not defined
+    ignore_errors: true
+
+  - name: Starting puppet server
+    service: name=puppetserver state=started enabled=true
+    when: master|string in ansible_fqdn
+
+  - name: Signing Required certificates
+    include: puppet_setup/tasks/certsign.yml
