@@ -69,9 +69,76 @@ uid => '1011',
 shell => '/bin/bash',
 home => "/home/$username",
 }
-#}
+}
 
 #class{user_account:
 #username=>"kranthi1"
 #}
+
+class addusers
+{
+user{'testuser':
+ensure=>present
 }
+}
+include addusers
+#}
+
+#Facts
+$message=$facts['os']['family']?{
+'RedHat'=>'running redhat',
+default=>'running other',
+}
+notify{$message:}
+
+[root@ansible-masternode kranthi]#
+
+[root@ansible-masternode kranthi]# puppet resource --types
+augeas
+cron
+exec
+file
+filebucket
+group
+host
+mount
+notify
+package
+resources
+schedule
+scheduled_task
+selboolean
+selmodule
+service
+ssh_authorized_key
+sshkey
+stage
+tidy
+user
+whit
+yumrepo
+zfs
+zone
+zpool
+
+[root@ansible-masternode kranthi]# puppet resource user kranthi
+user { 'kranthi':
+  ensure             => 'present',
+  comment            => 'kranthi',
+  gid                => 1000,
+  groups             => ['wheel', 'kranthi'],
+  home               => '/home/kranthi',
+  password           => '1234567',
+  password_max_age   => 99999,
+  password_min_age   => 0,
+  password_warn_days => 7,
+  provider           => 'useradd',
+  shell              => '/bin/bash',
+  uid                => 1000,
+}
+[root@ansible-masternode kranthi]# puppet resource package sysstat
+package { 'sysstat':
+  ensure   => 'purged',
+  provider => 'yum',
+}
+
