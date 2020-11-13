@@ -1,0 +1,77 @@
+[root@ansible kranthi]# puppet describe --list
+These are the types known to puppet:
+augeas          - Apply a change or an array of changes to the  ...
+cron            - Installs and manages cron jobs
+exec            - Executes external commands
+file            - Manages files, including their content, owner ...
+filebucket      - A repository for storing and retrieving file  ...
+group           - Manage groups
+host            - Installs and manages host entries
+mount           - Manages mounted filesystems, including puttin ...
+notify          - Sends an arbitrary message, specified as a st ...
+package         - Manage packages
+resources       - This is a metatype that can manage other reso ...
+schedule        - Define schedules for Puppet
+scheduled_task  - Installs and manages Windows Scheduled Tasks
+selboolean      - Manages SELinux booleans on systems with SELi ...
+selmodule       - Manages loading and unloading of SELinux poli ...
+service         - Manage running services
+ssh_authorized_key - Manages SSH authorized keys
+sshkey          - Installs and manages ssh host keys
+stage           - A resource type for creating new run stages
+tidy            - Remove unwanted files based on specific crite ...
+user            - Manage users
+whit            - Whits are internal artifacts of Puppet's curr ...
+yumrepo         - The client-side description of a yum reposito ...
+zfs             - Manage zfs
+zone            - Manages Solaris zones
+zpool           - Manage zpools
+
+[root@ansible-masternode kranthi]# cat /etc/puppetlabs/code/environments/production/manifests/site.pp
+#node 'ansible-controlnode1.local' { # Applies only to mentioned node; if nothing mentioned, applies to all
+#file { '/tmp/puppetesttdir': # Resource type file
+# ensure => 'directory', # Create as a diectory
+# owner => 'root', # Ownership
+# group => 'root', # Group Name
+# mode => '0755', # Directory permissions
+#}
+#}
+
+node 'ansible-controlnode.local' { # Applies only to mentioned node; if nothing mentioned, applies to all
+$packages=['git','sysstat']
+#package{'sysstat':
+package{$packages:
+ensure => installed,
+}
+
+$test="ok"
+file {'/tmp/status.txt':
+content => $test,
+#content => 'installed',
+mode => '0644'
+}
+
+#create user
+#class user{
+#user{'kranthi1':
+#ensure=>present,
+#uid=>'1101',
+#shell=>'/bin/bash',
+#}
+#}
+
+#class{user:}
+$username="kranthi1"
+#class user_account($username){
+user{$username:
+ensure => present,
+uid => '1011',
+shell => '/bin/bash',
+home => "/home/$username",
+}
+#}
+
+#class{user_account:
+#username=>"kranthi1"
+#}
+}
