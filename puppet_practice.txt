@@ -142,3 +142,20 @@ package { 'sysstat':
   provider => 'yum',
 }
 
+ puppet module list
+ puppet module install <module_name>
+ puppet agent -t --noop
+ puppet agent -t --debug
+ puppet help config
+ puppet config print
+ puppet config print manifest
+ puppet config print environment
+ puppet config print modulepath
+ puppet resource host
+ puppet resource package
+ puppet resource service puppet
+ 
+ Git
+ git config --global user.name "Username"
+ git config --global user.email "email-id"
+     puppet config print certname
