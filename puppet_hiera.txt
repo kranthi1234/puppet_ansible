@@ -1,0 +1,119 @@
+[root@ansible-masternode production]# cat hiera.yaml
+---
+version: 5
+defaults:
+  # The default value for "datadir" is "data" under the same directory as the hiera.yaml
+  # file (this file)
+  # When specifying a datadir, make sure the directory exists.
+  # See https://puppet.com/docs/puppet/latest/environments_about.html for further details on environments.
+  # datadir: data
+  # data_hash: yaml_data
+hierarchy:
+  - name: "Per-node data (yaml version)"
+    path: "nodes/%{::trusted.certname}.yaml"
+  - name: "Per-OS defaults"
+    path: "os/%{facts.os.family}.yaml"
+  - name: "Other YAML hierarchy levels"
+    path: "common.yaml"
+    
+   tree
+.
+├── data
+│   ├── common.yaml
+│   └── nodes
+├── environment.conf
+├── hiera.yaml
+├── manifests
+│   ├── site.pp
+│   └── site.pp.orig
+└── modules
+    ├── packages
+    │   └── manifests
+    │       └── hiera_test.pp
+    └── profile
+        └── manifests
+            └── hiera_test.pp
+
+8 directories, 7 files
+ cat data/common.yaml
+---
+#profile::hiera_test::ssl: false
+#profile::hiera_test::backups_enabled: true
+packages::hiera_test::packages:
+  - git
+  - vim
+
+cat manifests/site.pp
+#node 'ansible-controlnode1.local' { # Applies only to mentioned node; if nothing mentioned, applies to all
+#file { '/tmp/puppetesttdir': # Resource type file
+# ensure => 'directory', # Create as a diectory
+# owner => 'root', # Ownership
+# group => 'root', # Group Name
+# mode => '0755', # Directory permissions
+#}
+#}
+
+node 'ansible-controlnode.local' {
+#include profile::hiera_test
+include packages::hiera_test
+}
+
+ cat modules/profile/manifests/hiera_test.pp
+class profile::hiera_test (
+  Boolean             $ssl,
+  Boolean             $backups_enabled,
+  Optional[String[1]] $site_alias = undef,
+) {
+  file { '/tmp/hiera_test.txt':
+    ensure  => file,
+    content => @("END"),
+               Data from profile::hiera_test
+               -----
+               profile::hiera_test::ssl: ${ssl}
+               profile::hiera_test::backups_enabled: ${backups_enabled}
+               profile::hiera_test::site_alias: ${site_alias}
+               |END
+    owner   => root,
+    mode    => '0644',
+  }
+}
+
+cat modules/packages/manifests/hiera_test.pp
+class packages::hiera_test (
+$packages,
+) {
+package{ '$packages':
+ensure => installed,
+}
+}
+
+class packages::hiera_test (
+$packages,
+) {
+  case $::osfamily {
+    'RedHat', 'Fedora', 'CentOS' : {
+      package{ '$packages':
+      ensure => installed,
+      }
+      }
+      default: {
+      $osfamily = $::operatingsystem
+    }
+  }
+}
+
+facter --custom-dir=/opt/puppetlabs/facter/facts.d/ hardware_platform
+x86_64
+cd /opt/puppetlabs/facter/facts.d/
+[root@ansible-masternode facts.d]# cat hardware_platform.rb
+# hardware_platform.rb
+
+Facter.add('hardware_platform') do
+  setcode do
+    Facter::Core::Execution.execute('/bin/uname --hardware-platform')
+  end
+end
+
+
+
+  
