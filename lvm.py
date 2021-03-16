@@ -77,4 +77,4 @@ while True:
         input('\nPress enter key to continue...')
         os.system("clear")
     elif a=="9":
-        exit(
+        exit()
